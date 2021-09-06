@@ -7,7 +7,7 @@ require('./Database/monConn');
 require('./controller/userdata');
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-app.use('/',require('./router/userroute'));
+app.use('/api',require('./router/userroute'));
 app.get('/',(req,res,next) => {
     res.send("Hello world");
 })

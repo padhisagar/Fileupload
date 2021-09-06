@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const registerschema = new mongoose.Schema({
+    devId:{
+        type:Number,
+        required:true
+    },
     FullName:{
         type:String,
         required:true
@@ -18,24 +22,9 @@ const registerschema = new mongoose.Schema({
         type:String,
         required:false
     },
-    active:Boolean,
     date:{
         type:Date,
         default:Date.now()
-    },
-    Gender:{
-        type:String,
-        required:true
-    },
-    Phone:{
-        type:Number,
-        required:true,
-    },
-    age:{
-        type:Number,
-        required:true,
-        min:18,
-        max:60
     }
 })
 
