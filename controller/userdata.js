@@ -39,6 +39,9 @@ const loginuser = async (req, res, next) => {
             res.cookie("jwt", token, {
                 httpOnly: true
             });
+            const feeddata = await FeedBack.find({receiver_id:data._id},{_id:0,sender_id:0}).
+            populate('receiver_id','FullName Email devId photo');
+            return feeddata;
         } else {
             res.status(201).send({
                 error: {
@@ -60,11 +63,11 @@ const getalldetail = async (req,res) =>{
     }
 }
 
-const insertfeedback = async (req,res) => {
+const insertfeedback = async (req,res,sid,rid) => {
     try {
         const feed = new FeedBack({
-            sender_id:req.body.sid,
-            receiver_id:req.body.rid,
+            sender_id:sid,
+            receiver_id:rid,
             Feedback_data:req.body.feeddata
         })
         const data = await feed.save();

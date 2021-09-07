@@ -5,6 +5,10 @@ const createerror = require('http-errors');
 const control = require('../controller/userdata');
 const generatepassword = require('password-generator');
 const multer = require('multer');
+const cookieparser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const verifyu = require('../middleware/authandauth');
+router.use(cookieparser());
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -51,14 +55,17 @@ router.post("/adddetail", upload.single('Userprofile'), async (req, res, next) =
 router.post('/loginuser', async (req, res, next) => {
     try {
         const result = await control.loginuser(req, res);
+        const len = result.length;
         res.send(result);
     } catch (error) {
         res.status(401).send({ msg: `${error}` })
     }
 })
 
-router.get('/getadd', async (req, res) => {
+router.get('/getadd', verifyu.auth, async (req, res) => {
     try {
+        // console.log(req.cookies.jwt);
+        // console.log(req.user);
         const result = await control.getalldetail(req, res);
         res.send(result);
     } catch (error) {
@@ -68,25 +75,46 @@ router.get('/getadd', async (req, res) => {
     }
 })
 
-router.post('/addfeedback', async (req,res)=>{
+router.post('/addfeedback/:id', verifyu.auth, async (req, res) => {
     try {
-        const result = await control.insertfeedback(req,res);
+        const rid = req.params.id;
+        // const verify = jwt.verify(token,process.env.TOKEN);
+        const data = req.user;
+        const result = await control.insertfeedback(req, res,data._id,rid);
         res.send(result);
     } catch (error) {
         res.status(401).send({
-            msg:"FeedBack is Not updated"
+            msg: "FeedBack is Not updated"
         })
     }
 })
 
-router.get('/feedback/:id' , async (req,res) =>{
+router.get('/feedback', verifyu.auth, async (req, res) => {
     try {
-        const rid = req.params.id;
-        const data = await control.getuserfeedback(req,res,rid);
+        // const rid = req.params.id;
+        // const token = req.cookies.jwt;
+        // const verify = jwt.verify(token,process.env.TOKEN);
+        // console.log(verify._id);
+        const data = await control.getuserfeedback(req, res, req.user._id);
         res.send(data);
     } catch (error) {
         res.status(401).send({
-            msg:"Error occurred"
+            msg: "Error occurred"
+        })
+    }
+})
+
+router.get('/logout', verifyu.auth , async (req,res)=>{
+    try {
+        res.clearCookie("jwt");
+        res.send({
+            msg:'Successfully logout'
+        })
+    } catch (error) {
+        res.status(401).send({
+            error:{
+                msg:"Error has occurred"
+            }
         })
     }
 })
