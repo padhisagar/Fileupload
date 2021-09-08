@@ -8,6 +8,7 @@ const multer = require('multer');
 const cookieparser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const verifyu = require('../middleware/authandauth');
+const nodemailer = require('nodemailer');
 router.use(cookieparser());
 
 const storage = multer.diskStorage({
@@ -37,10 +38,21 @@ router.post("/adddetail", upload.single('Userprofile'), async (req, res, next) =
             const password = generatepassword();
             console.log(password);
             const data = await control.adduser(req, res, next, profilepic, password);
-            if (data) {
+            if (data !== null) {
+                const result = await control.sendmail(data.FullName, data.Email, password);
+                console.log(result);
+                if (result) {
+                    res.send({
+                        message: `${data.FullName} register with our database . Login Credintal has been send to your mail`
+                    });
+                }
+            }
+            else{
                 res.send({
-                    message: `${data.FullName} register with our database . Login Credintal has been send to your mail`
-                });
+                    error:{
+                        msg:"Data are stored in Database"
+                    }
+                })
             }
         }
         else {
@@ -75,12 +87,26 @@ router.get('/getadd', verifyu.auth, async (req, res) => {
     }
 })
 
+router.get('/dashboard',verifyu.auth, async (req, res) => {
+    try {
+        const sid = req.user._id;
+        const result = await control.adduserfeedback(req,res,sid);
+        res.send(result);
+    } catch (error) {
+        res.status(401).send({
+            error: {
+                msg: "error occurred"
+            }
+        })
+    }
+})
+
 router.post('/addfeedback/:id', verifyu.auth, async (req, res) => {
     try {
         const rid = req.params.id;
         // const verify = jwt.verify(token,process.env.TOKEN);
         const data = req.user;
-        const result = await control.insertfeedback(req, res,data._id,rid);
+        const result = await control.insertfeedback(req, res, data._id, rid);
         res.send(result);
     } catch (error) {
         res.status(401).send({
@@ -104,16 +130,16 @@ router.get('/feedback', verifyu.auth, async (req, res) => {
     }
 })
 
-router.get('/logout', verifyu.auth , async (req,res)=>{
+router.get('/logout', verifyu.auth, async (req, res) => {
     try {
         res.clearCookie("jwt");
         res.send({
-            msg:'Successfully logout'
+            msg: 'Successfully logout'
         })
     } catch (error) {
         res.status(401).send({
-            error:{
-                msg:"Error has occurred"
+            error: {
+                msg: "Error has occurred"
             }
         })
     }
